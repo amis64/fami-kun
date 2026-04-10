@@ -8,8 +8,10 @@ typedef struct{
     uint8_t* prg_ram;
     uint8_t* chr_ram;
     unsigned char nametable_arg;
+    unsigned char alt_nametable;
     unsigned char battery;
-    uint8_t mapper;
+    uint16_t mapper;
+    uint16_t submapper;
 }Cart;
 
 Cart init_cartridge(FILE *file);

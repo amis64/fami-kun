@@ -9,9 +9,6 @@ Cart init_cartridge(FILE *file){
     uint8_t header[16];
     bool is_ines = false;
     bool is_nes20 = false;
-    uint8_t mapper_high;
-    uint8_t mapper_low;
-
     fread(header, 1, 16, file);
     if (header[0]=='N' && header[1]=='E' && header[2]=='S' && header[3]==0x1A){
         is_ines=true;
@@ -19,16 +16,11 @@ Cart init_cartridge(FILE *file){
     if (is_ines==true && (header[7]&0x0C)==0x08){
         is_nes20=true;
     }
-    mapper_high = (header[7] & 0xF0) >> 4;
-    mapper_low = (header[6] & 0xF0) >> 4;
-    cartridge.mapper = (mapper_high << 4) | (mapper_low & 0x0F);
     unsigned char trainer_flag = (header[6] >> 2) & 1;
     cartridge.battery = (header[6] >> 1) & 1;
     cartridge.nametable_arg = header[6] & 1;
+    cartridge.alt_nametable = (header[6] & 0x08) >> 3;
 
-    if(is_nes20==false && header[12] != 0 || header[13] != 0 || header[14] != 0 || header[15] != 0){
-        cartridge.mapper = cartridge.mapper & 0x0F;
-    }
 
     if(is_ines){
         ines_init(file, &cartridge, header, trainer_flag);
@@ -41,6 +33,11 @@ Cart init_cartridge(FILE *file){
 
 void ines_init(FILE *file, Cart *cart, uint8_t *header, unsigned char trainer){
 
+    cart->mapper = (header[7] & 0xF0) | ((header[6] & 0xF0) >> 4);
+    if(header[12] != 0 || header[13] != 0 || header[14] != 0 || header[15] != 0){
+        cart->mapper = cart->mapper & 0x0F;
+    }
+    cart->submapper = 0;
     cart->prg_ram = malloc(8192);
     cart->prg_rom = malloc(header[4] * 16384);
     if(trainer){
@@ -48,10 +45,11 @@ void ines_init(FILE *file, Cart *cart, uint8_t *header, unsigned char trainer){
     }else{
         fseek(file, 16, SEEK_SET);
     }
+    fread(cart->prg_rom, header[4] * 16384, 1, file);
+
     if(header[5] == 0x00){
         cart->chr_ram = malloc(8192);
     }else{
-        fread(cart->prg_rom, header[4] * 16384, 1, file);
         cart->chr_rom = malloc(header[5] * 8192);
         fread(cart->chr_rom, header[5] * 8192, 1, file);
     }
@@ -59,5 +57,9 @@ void ines_init(FILE *file, Cart *cart, uint8_t *header, unsigned char trainer){
 
 }
 void nes20_init(FILE *file, Cart *cart, uint8_t *header, unsigned char trainer){
+    cart->mapper = ((header[8] & 0x0F) << 8) | (header[7] & 0xF0) | ((header[6] & 0xF0) >> 4);
+    cart->submapper = header[8] & 0xF0;
+
+
 
 }
