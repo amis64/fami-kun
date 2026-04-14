@@ -49,6 +49,7 @@ void ines_init(FILE *file, Cart *cart, uint8_t *header, unsigned char trainer){
 
     if(header[5] == 0x00){
         cart->chr_ram = malloc(8192);
+        cart->chr_rom = NULL;
     }else{
         cart->chr_rom = malloc(header[5] * 8192);
         fread(cart->chr_rom, header[5] * 8192, 1, file);
@@ -57,9 +58,36 @@ void ines_init(FILE *file, Cart *cart, uint8_t *header, unsigned char trainer){
 
 }
 void nes20_init(FILE *file, Cart *cart, uint8_t *header, unsigned char trainer){
+    uint8_t prg_rom_msb = (header[9] & 0xF);
+    uint8_t chr_rom_msb = (header[9] & 0xF0) >> 4;
+    int pgr_rom_size;
+    int chr_rom_size;
+
     cart->mapper = ((header[8] & 0x0F) << 8) | (header[7] & 0xF0) | ((header[6] & 0xF0) >> 4);
-    cart->submapper = header[8] & 0xF0;
+    cart->submapper = (header[8] & 0xF0) >>4;
 
+    if(prg_rom_msb < 0xF){
+        pgr_rom_size = (((prg_rom_msb << 8) | header[4]) * 16384);
+    }else{
+        pgr_rom_size =((1 << ((header[4] & 0XFC) >> 2)) * ((header[4] & 0x03) * 2+1));
+    }
+    cart->prg_rom = malloc(pgr_rom_size);
+    if(trainer){
+        fseek(file, 528, SEEK_SET);
+    }else{
+        fseek(file, 16, SEEK_SET);
+    }
+    fread(cart->prg_rom, pgr_rom_size, 1, file);
 
+    if(chr_rom_msb < 0xF){
+        chr_rom_size =(((chr_rom_msb << 8) | header[5]) * 8192);
 
+    }else{
+        chr_rom_size = ((1 << ((header[5] & 0XFC) >> 2)) *((header[5] & 0x03) * 2+1));
+    }
+    if(chr_rom_size != 0x00){
+        cart->chr_rom = malloc(chr_rom_size);
+        fread(cart->chr_rom, chr_rom_size, 1, file);
+    }
+    else{cart->chr_rom = NULL;}
 }
