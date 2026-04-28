@@ -33,12 +33,19 @@ Cart init_cartridge(FILE *file){
 
 void ines_init(FILE *file, Cart *cart, uint8_t *header, unsigned char trainer){
 
+    cart->chr_nvram = NULL;
+    cart->chr_ram = NULL;
     cart->mapper = (header[7] & 0xF0) | ((header[6] & 0xF0) >> 4);
     if(header[12] != 0 || header[13] != 0 || header[14] != 0 || header[15] != 0){
         cart->mapper = cart->mapper & 0x0F;
     }
     cart->submapper = 0;
-    cart->prg_ram = malloc(8192);
+    if(cart->battery == 0){
+        cart->prg_ram = malloc(8192);
+    }
+    else{
+        cart->prg_nvram = malloc(8192);
+    }
     cart->prg_rom = malloc(header[4] * 16384);
     if(trainer){
         fseek(file, 528, SEEK_SET);
@@ -90,4 +97,30 @@ void nes20_init(FILE *file, Cart *cart, uint8_t *header, unsigned char trainer){
         fread(cart->chr_rom, chr_rom_size, 1, file);
     }
     else{cart->chr_rom = NULL;}
+
+    if((64 << (header[10] & 0xF)) == 0){
+        cart->prg_ram = NULL;
+    }
+    else{
+        cart->prg_ram = malloc((64 << (header[10] & 0xF)));
+    }
+    if((64 << ((header[10] & 0xF0) >> 4)) == 0){
+        cart->prg_nvram = NULL;
+    }
+    else{
+        cart->prg_nvram = malloc(64 << ((header[10] & 0xF0) >> 4));
+    }
+
+    if((64 << (header[11] & 0xF)) == 0){
+        cart->chr_ram = NULL;
+    }
+    else{
+        cart->chr_ram = malloc((64 << (header[11] & 0xF)));
+    }
+    if((64 << ((header[11] & 0xF0) >> 4)) == 0){
+        cart->chr_nvram = NULL;
+    }
+    else{
+        cart->chr_nvram = malloc(64 << ((header[11] & 0xF0) >> 4));
+    }
 }

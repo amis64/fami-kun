@@ -6,7 +6,9 @@ typedef struct{
     uint8_t* chr_rom;
     uint8_t* prg_rom;
     uint8_t* prg_ram;
-    uint8_t* chr_ram;
+    uint8_t* prg_nvram;
+    uint8_t* chr_nvram;
+     uint8_t* chr_ram;
     unsigned char nametable_arg;
     unsigned char alt_nametable;
     unsigned char battery;
