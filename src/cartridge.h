@@ -14,6 +14,12 @@ typedef struct{
     unsigned char battery;
     uint16_t mapper;
     uint16_t submapper;
+    int pgr_rom_size;
+    int pgr_ram_size;
+    int pgr_nvram_size;
+    int chr_rom_size;
+    int chr_ram_size;
+    int chr_nvram_size;
 }Cart;
 
 Cart init_cartridge(FILE *file);
