@@ -1,6 +1,6 @@
 #include "CPU.h"
 #include "opcodes.h"
-#include "bus.c" //TODO: Create bus.h
+#include "bus.h"
 
 CPU cpu_init(){
     CPU cpu;
