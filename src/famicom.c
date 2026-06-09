@@ -18,7 +18,7 @@ int main(int argc, char* argv[]){
   }
 
   Cart cart = init_cartridge(rom);
-  bus_init(cart.mapper);
+  bus_init(cart.mapper, &cart);
   CPU cpu = cpu_init();
 
   return 0;

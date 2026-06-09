@@ -1,13 +1,15 @@
 #include <stdint.h>
 #include <stdio.h>
-#include "mappers.h"
+#include "bus.h"
 
 uint8_t wram[2048];
 uint8_t vram[2048];
 Mapper current_mapper;
+Cart *current_cart;
 
-void bus_init(uint16_t mapper_number){
-    current_mapper = mapper_init(mapper_number);
+void bus_init(uint16_t mapper, Cart *cart_ptr){
+    current_mapper = mapper_init(mapper);
+    current_cart = cart_ptr;
 }
 uint8_t read(uint16_t addr){
     uint8_t read_value;
@@ -28,7 +30,7 @@ uint8_t read(uint16_t addr){
             break;
         //read from cartridge
         case 0x4020 ... 0xFFFF:
-            read_value = current_mapper.mapper_read(addr);
+            read_value = current_mapper.mapper_read(addr, current_cart);
             break;
     }
 
@@ -54,7 +56,7 @@ void write(uint16_t addr, uint8_t value){
             break;
             //read from cartridge
         case 0x4020 ... 0xFFFF:
-            current_mapper.mapper_write(addr, value);
+            current_mapper.mapper_write(addr, value, current_cart);
             break;
     }
 
