@@ -11,7 +11,7 @@ void bus_init(uint16_t mapper, Cart *cart_ptr){
     current_mapper = mapper_init(mapper);
     current_cart = cart_ptr;
 }
-uint8_t read(uint16_t addr){
+uint8_t bus_read(uint16_t addr){
     uint8_t read_value;
     //read from wram
     switch (addr){
@@ -37,7 +37,7 @@ uint8_t read(uint16_t addr){
     return read_value;
 }
 
-void write(uint16_t addr, uint8_t value){
+void bus_write(uint16_t addr, uint8_t value){
     //read from wram
     switch (addr){
         case 0x0000 ... 0x1FFF:

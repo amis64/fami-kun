@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "opcodes.h"
+#include <stddef.h>
 
 #pragma once
 
@@ -12,8 +12,29 @@ typedef struct{
     uint8_t status_flags;
 }CPU;
 
+typedef enum {ACC, ABS, ABS_X, ABS_Y, IMM, IMP, IND, IND_X, IND_Y, REL, ZP, ZP_X, ZP_Y}Addressin_mode;
+
+typedef struct {
+    uint16_t address;
+    uint8_t  value;
+    int8_t   offset;
+} Operands;
+
+typedef struct{
+    Addressin_mode mode;
+    size_t bytes;
+    void (*implementation)(Operands *oper, CPU *cpu);
+    int cycles;
+}Instruction;
+
+
+#define OPCODE_TABLE_SIZE 256
+extern const Instruction opcodes[OPCODE_TABLE_SIZE];
 
 
 CPU cpu_init();
-void cpu_execute(uint8_t rom [], CPU cpu); //Read instruction from the rom, match opcode to instruction from look up table,  get mode get_mode_operands, pass get mode get_mode_operands to  void (*implementation)(void) from instruction struct
-Operands get_mode_operands(uint8_t rom [], Addressin_mode mode, CPU cpu);
+void cpu_execute(CPU *cpu_ptr);
+Operands fetch_operands(Addressin_mode mode, CPU *cpu_ptr);
+
+void ADC(Operands *oper, CPU *cpu);
+void AND(Operands *oper, CPU *cpu);
