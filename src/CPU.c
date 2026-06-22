@@ -365,13 +365,17 @@ void PHP(Operands *oper, CPU *cpu){
 }
 void PLA(Operands *oper, CPU *cpu){
     cpu->accumulator = stack_pull(cpu);
+    //set zero flag
+    set_zero_flag(cpu, cpu->accumulator);
+    //set negative flag
+    set_negative_flag(cpu, cpu->accumulator);
 }
 void PLP(Operands *oper, CPU *cpu){
     cpu->status_flags = stack_pull(cpu);
 }
 void ROL_ACC(Operands *oper, CPU *cpu){
 
-    uint8_t bit_7 = (cpu->accumulator & 0x08) >> 8;
+    uint8_t bit_7 = (cpu->accumulator & 0x80) >>0x07;
     cpu->accumulator = (cpu->accumulator << 1) | (cpu->status_flags & FLAG_CARRY);
     cpu->status_flags = (cpu->status_flags & FLAG_CARRY_CLEAR) | bit_7;
     //set zero flag
@@ -380,17 +384,106 @@ void ROL_ACC(Operands *oper, CPU *cpu){
     set_negative_flag(cpu, cpu->accumulator);
 }
 void ROL(Operands *oper, CPU *cpu){
-    uint8_t bit_7 = (oper->value & 0x08) >> 8;
+    uint8_t bit_7 = (oper->value & 0x80) >> 0x07;
     oper->value = (oper->value << 1) | (cpu->status_flags & FLAG_CARRY);
     cpu->status_flags = (cpu->status_flags & FLAG_CARRY_CLEAR) | bit_7;
+    //set zero flag
+    set_zero_flag(cpu, oper->value);
+    //set negative flag
+    set_negative_flag(cpu, oper->value);
+    bus_write(oper->address, oper->value);
+}
+void ROR_ACC(Operands *oper, CPU *cpu){
+
+    uint8_t bit_0 = (cpu->accumulator & 0x01);
+    cpu->accumulator = (cpu->accumulator >> 1) | ((cpu->status_flags & FLAG_CARRY) << 0x07);
+    cpu->status_flags = (cpu->status_flags & FLAG_CARRY_CLEAR) | bit_0;
+    //set zero flag
+    set_zero_flag(cpu, cpu->accumulator);
+    //set negative flag
+    set_negative_flag(cpu, cpu->accumulator);
+}
+void ROR(Operands *oper, CPU *cpu){
+
+    uint8_t bit_0 = (oper->value & 0x01);
+    oper->value = (oper->value >> 1) | ((cpu->status_flags & FLAG_CARRY) << 0x07);
+    cpu->status_flags = (cpu->status_flags & FLAG_CARRY_CLEAR) | bit_0;
     //set zero flag
     set_zero_flag(cpu, cpu->accumulator);
     //set negative flag
     set_negative_flag(cpu, oper->value);
     bus_write(oper->address, oper->value);
 }
+void RTI(Operands *oper, CPU *cpu){
+    cpu->status_flags = stack_pull(cpu);
+    uint16_t first_pull = stack_pull(cpu);
+    cpu->pc = first_pull | (stack_pull(cpu) << 8);
+}
+void RTS(Operands *oper, CPU *cpu){
+    uint16_t first_pull = stack_pull(cpu);
+    cpu->pc = first_pull | (stack_pull(cpu) << 8);
+}
+void SBC(Operands *oper, CPU *cpu){
+    uint16_t result;
+    uint8_t accumulator = cpu->accumulator;
+    result = cpu->accumulator - oper->value - (1 - (cpu->status_flags & FLAG_CARRY));
+    cpu->accumulator = result & 0xFF;
+    //set carry flag
+    cpu->status_flags = (cpu->status_flags &  FLAG_CARRY_CLEAR) | ((result ^ 0x100) >> 8);
+    //set overflow flag
+    cpu->status_flags = (cpu->status_flags & FLAG_OVERFLOW_CLEAR) | (((~(accumulator ^ oper->value) & (accumulator ^ result)) & 0x80) >> 1);
+    //set zero flag
+    set_zero_flag(cpu, cpu->accumulator);
+    //set negative flag
+    set_negative_flag(cpu, cpu->accumulator);
+}
+void SEC(Operands *oper, CPU *cpu){
+    cpu->status_flags = cpu->status_flags | FLAG_CARRY;
+}
+void SED(Operands *oper, CPU *cpu){
+    cpu->status_flags = cpu->status_flags | FLAG_DECIMAL;
+}
+void SEI(Operands *oper, CPU *cpu){
+    cpu->status_flags = cpu->status_flags | FLAG_INTERRUPT;
+}
+void STA(Operands *oper, CPU *cpu){
+    bus_write(oper->address, cpu->accumulator);
+}
+void STX(Operands *oper, CPU *cpu){
+    bus_write(oper->address, cpu->x_register);
+}
+void STY(Operands *oper, CPU *cpu){
+    bus_write(oper->address, cpu->y_register);
+}
+void TAX(Operands *oper, CPU *cpu){
+    cpu->x_register = cpu->accumulator;
+    set_zero_flag(cpu, cpu->x_register);
+    set_negative_flag(cpu, cpu->x_register);
+}
+void TAY(Operands *oper, CPU *cpu){
+    cpu->y_register = cpu->accumulator;
+    set_zero_flag(cpu, cpu->y_register);
+    set_negative_flag(cpu, cpu->y_register);
+}
 
-
+void TSX(Operands *oper, CPU *cpu){
+    cpu->x_register = cpu->sp;
+    set_zero_flag(cpu, cpu->x_register);
+    set_negative_flag(cpu, cpu->x_register);
+}
+void TXA(Operands *oper, CPU *cpu){
+    cpu->accumulator = cpu->x_register;
+    set_zero_flag(cpu, cpu->accumulator);
+    set_negative_flag(cpu, cpu->accumulator);
+}
+void TXS(Operands *oper, CPU *cpu){
+    cpu->sp = cpu->x_register;
+}
+void TYA(Operands *oper, CPU *cpu){
+    cpu->accumulator = cpu->y_register;
+    set_zero_flag(cpu, cpu->accumulator);
+    set_negative_flag(cpu, cpu->accumulator);
+}
 //CPU HELPERS
 static uint16_t get_address(uint16_t addr){
     return bus_read(addr) | ((bus_read(addr+1)) << 8);
