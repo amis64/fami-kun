@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include <stdio.h>
 #include "bus.h"
 
 uint8_t wram[2048];
@@ -13,20 +12,25 @@ void bus_init(uint16_t mapper, Cart *cart_ptr){
 }
 uint8_t bus_read(uint16_t addr){
     uint8_t read_value;
+    uint16_t ppu_reg;
     //read from wram
     switch (addr){
         case 0x0000 ... 0x1FFF:
-            if(addr > 0x07FF){
-                read_value = wram[addr % 0x800];
-            }else(read_value = wram[addr]);
+            read_value = wram[addr % 0x800];
             break;
         //read from PPU
         case 0x2000 ... 0x3FFF:
-            printf("No PPU yet!");
+            ppu_reg= 0x2000 + (addr % 8);
+            if (ppu_reg == 0x2002) {
+                // Fake VBlank flag (Bit 7) so CPU boot loops don't get stuck
+                read_value = 0x80;
+            } else {
+                read_value = 0x00;
+            }
             break;
         //read from APU
         case 0x4000 ... 0x4017:
-            printf("No APU yet!");
+            read_value = 0x00;
             break;
         //read from cartridge
         case 0x4020 ... 0xFFFF:
@@ -41,18 +45,14 @@ void bus_write(uint16_t addr, uint8_t value){
     //read from wram
     switch (addr){
         case 0x0000 ... 0x1FFF:
-            if(addr > 0x07FF){
-                wram[addr % 0x800] = value;
-            }else(wram[addr] = value);
-
-        break;
+            wram[addr % 0x800] = value;
+            break;
         //read from PPU
         case 0x2000 ... 0x3FFF:
-            printf("No PPU yet!");
+
             break;
             //read from APU
         case 0x4000 ... 0x4017:
-            printf("No APU yet!");
             break;
             //read from cartridge
         case 0x4020 ... 0xFFFF:

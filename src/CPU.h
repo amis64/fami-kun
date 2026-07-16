@@ -41,10 +41,10 @@ typedef struct {
 } Operands;
 
 typedef struct{
-    Addressin_mode mode;
-    size_t bytes;
     void (*implementation)(Operands *oper, CPU *cpu);
+    Addressin_mode mode;
     int cycles;
+    uint8_t page_cross_penalty;
 }Instruction;
 
 
@@ -53,6 +53,6 @@ extern const Instruction opcodes[OPCODE_TABLE_SIZE];
 
 
 CPU cpu_init();
-void cpu_execute(CPU *cpu_ptr);
-Operands fetch_operands(Addressin_mode mode, CPU *cpu_ptr);
+int cpu_execute(CPU *cpu_ptr);
+Operands fetch_operands(Addressin_mode mode, CPU *cpu_ptr, uint8_t *extra_cycles);
 
